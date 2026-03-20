@@ -23,19 +23,21 @@ const openai = new OpenAI({
 app.use(cors());
 app.use(express.json());
 
+let isMongoConnected = false;
+
 // Connect to MongoDB
 if (!process.env.MONGODB_URI && (require.main === module || process.env.NODE_ENV !== 'production')) {
   console.log('⚠️  WARNING: MONGODB_URI is missing from your .env file!');
   console.log('👉 Please add: MONGODB_URI="your_mongodb_atlas_string_here" to your api/.env file.');
-  console.log('🔗 Follow the steps I provided earlier to get your Atlas string.');
+  console.log('💡 RECTIFYING: Falling back to local db.json storage for now.');
 }
 
 mongoose.connect(MONGODB_URI, {
-  serverSelectionTimeoutMS: 5000, // Fail after 5s instead of 30s+
+  serverSelectionTimeoutMS: 5000, 
 })
   .then(async () => {
     console.log('✅ Connected to MongoDB successfully');
-    // Ensure a default user exists for demonstration
+    isMongoConnected = true;
     const userCount = await User.countDocuments();
     if (userCount === 0) {
       await User.create({
@@ -43,23 +45,41 @@ mongoose.connect(MONGODB_URI, {
         email: 'tharun@example.com',
         avatar: 'TB'
       });
-      console.log('Default user created');
     }
   })
   .catch(err => {
-    console.error('❌ MongoDB Connection Error:', err.message);
-    if (err.message.includes('buffering timed out')) {
-      console.log('💡 TIP: This usually means your IP is not whitelisted on MongoDB Atlas or your URI is incorrect.');
-    }
+    console.warn('❌ MongoDB Error:', err.message);
+    console.log('🚀 Using Local JSON Fallback (db.json)');
+    isMongoConnected = false;
   });
 
+// Abstraction for Database (Switch between Mongo and JSON)
+const jsonDB = require('./jsonDB');
+const getDb = (modelName) => {
+  const readyState = mongoose.connection.readyState;
+  const useMongo = isMongoConnected && readyState === 1; // 1 = connected
+  
+  if (useMongo) {
+    if (modelName === 'User') return User;
+    if (modelName === 'Chat') return Chat;
+    if (modelName === 'Message') return Message;
+    if (modelName === 'FAQ') return FAQ;
+  }
+  
+  console.log(`📡 [DB] ${modelName} request handled by ${useMongo ? 'MongoDB' : 'JSON Fallback'} (readyState: ${readyState})`);
+  
+  // Simplified mock methods that match Mongoose basics
+  const mockModel = jsonDB[modelName.toLowerCase() + 's'] || jsonDB[modelName.toLowerCase()];
+  return mockModel;
+};
+
 // --- ADMIN ROUTES ---
-// Get all users and chats for Admin
 app.get(['/api/admin/chats', '/admin/chats'], async (req, res) => {
   try {
-    const chats = await Chat.find()
-      .populate('userId', 'name email avatar')
-      .sort({ updatedAt: -1 });
+    const Db = getDb('Chat');
+    const chats = isMongoConnected 
+      ? await Db.find().populate('userId', 'name email avatar').sort({ updatedAt: -1 })
+      : await Db.find();
     res.json(chats);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -69,7 +89,8 @@ app.get(['/api/admin/chats', '/admin/chats'], async (req, res) => {
 // --- FAQ ROUTES ---
 app.get(['/api/faqs', '/faqs'], async (req, res) => {
   try {
-    const faqs = await FAQ.find().sort({ createdAt: -1 });
+    const Db = getDb('FAQ');
+    const faqs = await Db.find(); // Mock find already sorts
     res.json(faqs);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -78,8 +99,9 @@ app.get(['/api/faqs', '/faqs'], async (req, res) => {
 
 app.post(['/api/faqs', '/faqs'], async (req, res) => {
   try {
+    const Db = getDb('FAQ');
     const { question, answer } = req.body;
-    const newFaq = await FAQ.create({ question, answer });
+    const newFaq = await Db.create({ question, answer });
     res.json(newFaq);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -88,10 +110,11 @@ app.post(['/api/faqs', '/faqs'], async (req, res) => {
 
 app.put(['/api/faqs/:id', '/faqs/:id'], async (req, res) => {
   try {
+    const Db = getDb('FAQ');
     const { question, answer } = req.body;
-    const updatedFaq = await FAQ.findByIdAndUpdate(
+    const updatedFaq = await Db.findByIdAndUpdate(
       req.params.id, 
-      { question, answer, updatedAt: Date.now() },
+      { question, answer },
       { new: true }
     );
     res.json(updatedFaq);
@@ -102,7 +125,8 @@ app.put(['/api/faqs/:id', '/faqs/:id'], async (req, res) => {
 
 app.delete(['/api/faqs/:id', '/faqs/:id'], async (req, res) => {
   try {
-    await FAQ.findByIdAndDelete(req.params.id);
+    const Db = getDb('FAQ');
+    await Db.findByIdAndDelete(req.params.id);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -112,10 +136,12 @@ app.delete(['/api/faqs/:id', '/faqs/:id'], async (req, res) => {
 // Get all chats for a user
 app.get(['/api/chats/:email', '/chats/:email'], async (req, res) => {
   try {
-    const user = await User.findOne({ email: req.params.email });
-    if (!user) return res.status(440).json({ error: 'User not found' });
+    const UserDb = getDb('User');
+    const ChatDb = getDb('Chat');
+    const user = await UserDb.findOne({ email: req.params.email });
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
-    const chats = await Chat.find({ userId: user._id }).sort({ updatedAt: -1 });
+    const chats = await ChatDb.find({ userId: isMongoConnected ? user._id : user._id });
     res.json(chats);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -125,7 +151,8 @@ app.get(['/api/chats/:email', '/chats/:email'], async (req, res) => {
 // Get messages for a chat
 app.get(['/api/messages/:chatId', '/messages/:chatId'], async (req, res) => {
   try {
-    const messages = await Message.find({ chatId: req.params.chatId }).sort({ createdAt: 1 });
+    const MsgDb = getDb('Message');
+    const messages = await MsgDb.find({ chatId: req.params.chatId });
     res.json(messages);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -143,16 +170,21 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
   }
 
   try {
-    const user = await User.findOne({ email });
+    const UserDb = getDb('User');
+    const ChatDb = getDb('Chat');
+    const MsgDb = getDb('Message');
+    const FaqDb = getDb('FAQ');
+
+    const user = await UserDb.findOne({ email });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     let currentChat;
     if (chatId) {
-      currentChat = await Chat.findById(chatId);
+      currentChat = await ChatDb.findById(chatId);
     }
 
     if (!currentChat) {
-      currentChat = await Chat.create({
+      currentChat = await ChatDb.create({
         userId: user._id,
         title: message.substring(0, 30) + (message.length > 30 ? '...' : ''),
         lastMessage: message
@@ -160,8 +192,8 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
     }
 
     // Save user message
-    const userMsg = await Message.create({
-      chatId: currentChat._id,
+    const userMsg = await MsgDb.create({
+      chatId: isMongoConnected ? currentChat._id : currentChat._id,
       content: message,
       isBot: false,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -170,13 +202,13 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
     let aiResponse = "";
     
     // Check FAQ matching
-    const faqs = await FAQ.find();
+    const faqs = await FaqDb.find();
     const normalizedMsg = message.toLowerCase().trim();
     
     // 1. Try exact match
     let matchedFaq = faqs.find(f => f.question.toLowerCase() === normalizedMsg);
     
-    // 2. Try partial match (if FAQ question is a significant phrase)
+    // 2. Try partial match
     if (!matchedFaq) {
       matchedFaq = faqs.find(f => f.question.length > 4 && normalizedMsg.includes(f.question.toLowerCase()));
     }
@@ -185,6 +217,10 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
       aiResponse = matchedFaq.answer;
     } else {
       // Get OpenAI response if no FAQ matched
+      const history = isMongoConnected 
+        ? await MsgDb.find({ chatId: currentChat._id }).sort({ createdAt: 1 }).limit(10)
+        : await MsgDb.find({ chatId: currentChat._id });
+
       const completion = await openai.chat.completions.create({
         model: "openai/gpt-4o",
         messages: [
@@ -192,14 +228,11 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
             role: "system",
             content: "You are a professional, polite, and helpful customer support assistant for SupportAI. Provide concise and clear answers."
           },
-          ...((await Message.find({ chatId: currentChat._id }).sort({ createdAt: 1 }).limit(10)).map(m => ({
+          ...((history).map(m => ({
             role: m.isBot ? "assistant" : "user",
             content: m.content
           }))),
-          {
-            role: "user",
-            content: message
-          }
+          { role: "user", content: message }
         ],
       });
 
@@ -209,8 +242,8 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
     const aiTimestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     // Save bot message
-    const botMsg = await Message.create({
-      chatId: currentChat._id,
+    const botMsg = await MsgDb.create({
+      chatId: isMongoConnected ? currentChat._id : currentChat._id,
       content: aiResponse,
       isBot: true,
       timestamp: aiTimestamp
@@ -219,7 +252,12 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
     // Update chat last message
     currentChat.lastMessage = aiResponse;
     currentChat.updatedAt = Date.now();
-    await currentChat.save();
+    
+    if (isMongoConnected) {
+      await currentChat.save();
+    } else {
+      await ChatDb.save(currentChat);
+    }
 
     res.json({
       reply: aiResponse,
