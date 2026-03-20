@@ -73,6 +73,51 @@ const getDb = (modelName) => {
   return mockModel;
 };
 
+// --- AUTH ROUTES ---
+app.post(['/api/auth/google', '/auth/google'], async (req, res) => {
+  try {
+    const { email, name, picture } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email is required' });
+
+    const UserDb = getDb('User');
+    
+    // Try to find existing user
+    let user = await UserDb.findOne({ email });
+    
+    if (!user) {
+      // Create new user from Google profile
+      const avatar = name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'U';
+      if (isMongoConnected && mongoose.connection.readyState === 1) {
+        user = await User.create({ name, email, avatar, picture });
+      } else {
+        user = await jsonDB.users.create({ name, email, avatar, picture });
+      }
+      console.log(`✅ New user created: ${email}`);
+    } else {
+      // Update picture if it changed
+      if (picture && user.picture !== picture) {
+        if (isMongoConnected && mongoose.connection.readyState === 1) {
+          user = await User.findByIdAndUpdate(user._id, { picture }, { new: true });
+        } else {
+          user.picture = picture;
+        }
+      }
+      console.log(`👋 Returning user logged in: ${email}`);
+    }
+
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      picture: user.picture,
+      avatar: user.avatar,
+    });
+  } catch (error) {
+    console.error('Auth Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // --- ADMIN ROUTES ---
 app.get(['/api/admin/chats', '/admin/chats'], async (req, res) => {
   try {

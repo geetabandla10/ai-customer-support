@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageSquare, Plus, Search, Settings, User } from 'lucide-react';
+import { MessageSquare, Plus, Search, Settings, LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '../utils/cn';
 
@@ -10,14 +10,28 @@ interface ChatHistoryItem {
   updatedAt: string;
 }
 
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  picture?: string;
+  avatar?: string;
+}
+
 interface SidebarProps {
   chats: ChatHistoryItem[];
   onSelectChat: (chatId: string) => void;
   onNewChat: () => void;
   currentChatId: string | null;
+  user?: User | null;
+  onLogout?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ chats, onSelectChat, onNewChat, currentChatId }) => {
+const Sidebar: React.FC<SidebarProps> = ({ chats, onSelectChat, onNewChat, currentChatId, user, onLogout }) => {
+  const initials = user?.name
+    ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    : 'U';
+
   return (
     <aside className="w-80 h-full bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800">
       {/* Header */}
@@ -90,16 +104,34 @@ const Sidebar: React.FC<SidebarProps> = ({ chats, onSelectChat, onNewChat, curre
         )}
       </div>
 
-      {/* User Profiles */}
+      {/* User Profile + Logout */}
       <div className="p-4 border-t border-slate-800">
-        <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-800/50 cursor-pointer transition-colors group">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white ring-2 ring-slate-800 group-hover:ring-blue-500/50 transition-all">
-            <User className="w-6 h-6" />
-          </div>
+        <div className="flex items-center gap-3 p-2 rounded-xl">
+          {/* Avatar */}
+          {user?.picture ? (
+            <img
+              src={user.picture}
+              alt={user.name}
+              className="w-10 h-10 rounded-full ring-2 ring-slate-700 object-cover"
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-sm font-bold ring-2 ring-slate-700">
+              {initials}
+            </div>
+          )}
           <div className="flex-1 overflow-hidden">
-            <p className="text-sm font-semibold text-white truncate">Tharun Bandla</p>
-            <p className="text-xs text-slate-500 truncate">Premium Plan</p>
+            <p className="text-sm font-semibold text-white truncate">{user?.name || 'Guest'}</p>
+            <p className="text-xs text-slate-500 truncate">{user?.email || ''}</p>
           </div>
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              title="Logout"
+              className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
     </aside>

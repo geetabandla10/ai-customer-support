@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import ChatWindow from './components/ChatWindow';
+import { useAuth } from './context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface ChatMessage {
   id?: string;
@@ -17,10 +19,13 @@ interface ChatHistoryItem {
   updatedAt: string;
 }
 
-const USER_EMAIL = 'tharun@example.com';
-
 function ChatApp() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const USER_EMAIL = user?.email || '';
+
   const [isTyping, setIsTyping] = useState(false);
+
   const [messages, setMessages] = useState<ChatMessage[]>([{
     id: 'welcome',
     content: "Hello! I'm your SupportAI assistant. How can I help you today?",
@@ -141,6 +146,8 @@ function ChatApp() {
         onSelectChat={fetchMessages} 
         onNewChat={handleNewChat}
         currentChatId={currentChatId}
+        user={user}
+        onLogout={() => { logout(); navigate('/login'); }}
       />
       <main className="flex-1 min-w-0">
         <ChatWindow 

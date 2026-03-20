@@ -1,0 +1,13 @@
+{
+  "users": [
+    {
+      "_id": "default_user_1",
+      "name": "Tharun Bandla",
+      "email": "tharun@example.com",
+      "avatar": "TB"
+    }
+  ],
+  "chats": [],
+  "messages": [],
+  "faqs": []
+}
