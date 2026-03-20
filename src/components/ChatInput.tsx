@@ -37,16 +37,6 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled }) => {
 
   return (
     <div className="p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-800">
-      <div className="max-w-4xl mx-auto flex items-end gap-2 bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-2 border border-slate-200 dark:border-slate-700/50 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
-        <div className="flex items-center gap-1 pb-1">
-          <button className="p-2 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-            <Paperclip className="w-5 h-5" />
-          </button>
-          <button className="p-2 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors hidden sm:block">
-            <ImageIcon className="w-5 h-5" />
-          </button>
-        </div>
-
         <textarea
           ref={textareaRef}
           rows={1}
@@ -59,12 +49,6 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled }) => {
         />
 
         <div className="flex items-center gap-1 pb-1">
-          <button className="p-2 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors hidden sm:block">
-            <Smile className="w-5 h-5" />
-          </button>
-          <button className="p-2 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors hidden sm:block">
-            <Mic className="w-5 h-5" />
-          </button>
           <button
             onClick={handleSend}
             disabled={!message.trim() || disabled}
