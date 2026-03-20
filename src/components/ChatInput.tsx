@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, Smile, Mic, Image as ImageIcon } from 'lucide-react';
+import { Send, Paperclip, Image as ImageIcon } from 'lucide-react';
 import { cn } from '../utils/cn';
 
 interface ChatInputProps {
@@ -9,12 +9,25 @@ interface ChatInputProps {
 
 const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled }) => {
   const [message, setMessage] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
 
   const handleSend = () => {
-    if (message.trim() && !disabled) {
-      onSendMessage(message.trim());
+    if ((message.trim() || selectedFile) && !disabled) {
+      const content = selectedFile 
+        ? `${message.trim()} [Attached: ${selectedFile.name}]`
+        : message.trim();
+      onSendMessage(content);
       setMessage('');
+      setSelectedFile(null);
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
       }
@@ -37,6 +50,40 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled }) => {
 
   return (
     <div className="p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-800">
+      {selectedFile && (
+        <div className="max-w-4xl mx-auto mb-2 px-2 py-1 flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg text-xs text-blue-600 dark:text-blue-400">
+          <Paperclip className="w-3 h-3" />
+          <span className="truncate max-w-[200px]">{selectedFile.name}</span>
+          <button 
+            onClick={() => setSelectedFile(null)}
+            className="ml-auto hover:text-blue-800 dark:hover:text-blue-200"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+      <div className="max-w-4xl mx-auto flex items-end gap-2 bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-2 border border-slate-200 dark:border-slate-700/50 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          onChange={handleFileChange} 
+          className="hidden" 
+        />
+        <div className="flex items-center gap-1 pb-1">
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            className="p-2 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+          >
+            <Paperclip className="w-5 h-5" />
+          </button>
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            className="p-2 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors hidden sm:block"
+          >
+            <ImageIcon className="w-5 h-5" />
+          </button>
+        </div>
+
         <textarea
           ref={textareaRef}
           rows={1}
