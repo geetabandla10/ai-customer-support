@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { Search, Phone, Video, Info, MoreVertical, Sparkles } from 'lucide-react';
+import { Search, Phone, Video, MoreVertical, Sparkles } from 'lucide-react';
 import Message from './Message';
 import ChatInput from './ChatInput';
 import TypingIndicator from './TypingIndicator';
