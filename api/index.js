@@ -80,7 +80,8 @@ const getDb = (modelName) => {
 };
 
 const { OAuth2Client } = require('google-auth-library');
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const GOOGLE_CLIENT_ID_FALLBACK = '853185526172-sb7e5lmlvlnd72sojm4t0ldsi5m7jebp.apps.googleusercontent.com';
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID_FALLBACK);
 
 // --- AUTH ROUTES ---
 app.post(['/api/auth/google', '/auth/google'], async (req, res) => {
@@ -92,12 +93,12 @@ app.post(['/api/auth/google', '/auth/google'], async (req, res) => {
     // Use Google ID Token if provided, else fallback to mock (for demo/guest)
     if (credential) {
       try {
-        const client_id = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
-        console.log(`🔐 Verifying token with Client ID: ${client_id}`);
+        const authClientId = process.env.GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID_FALLBACK;
+        console.log(`🔐 Verifying token with Client ID: ${authClientId}`);
         
         const ticket = await googleClient.verifyIdToken({
           idToken: credential,
-          audience: client_id,
+          audience: authClientId,
         });
         const payload = ticket.getPayload();
         email = payload.email;

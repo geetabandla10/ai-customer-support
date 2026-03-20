@@ -7,7 +7,7 @@ import LoginPage from './components/LoginPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Replace with your Google OAuth Client ID from https://console.cloud.google.com
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID';
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '853185526172-sb7e5lmlvlnd72sojm4t0ldsi5m7jebp.apps.googleusercontent.com';
 
 function App() {
   return (
