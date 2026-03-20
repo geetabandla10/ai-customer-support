@@ -400,21 +400,18 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
 });
 
 // Serve static frontend natively for a unified single local link
-if (true) { // Always listen when running this file directly in development
+if (require.main === module) { 
   const path = require('path');
   app.use(express.static(path.join(__dirname, '../dist')));
   
   app.use((req, res) => {
     res.sendFile(path.join(__dirname, '../dist', 'index.html'));
   });
-
+ 
   app.listen(PORT, '127.0.0.1', () => {
     console.log(`Unified Server is running on port ${PORT}`);
     console.log(`Access the full app at: http://127.0.0.1:${PORT}`);
   });
-
-  // Keep process alive in background environments
-  setInterval(() => {}, 60000);
 }
 
 module.exports = app;
