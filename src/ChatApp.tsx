@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import ChatWindow from './components/ChatWindow';
+import { Zap } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -35,9 +36,24 @@ function ChatApp() {
   const [chats, setChats] = useState<ChatHistoryItem[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
 
+  const [storageMode, setStorageMode] = useState<'mongodb' | 'json' | null>(null);
+
   useEffect(() => {
     fetchChats();
+    fetchStatus();
   }, []);
+
+  const fetchStatus = async () => {
+    try {
+      const res = await fetch('/api/status');
+      if (res.ok) {
+        const data = await res.json();
+        setStorageMode(data.storage);
+      }
+    } catch (e) {
+      console.error('Failed to fetch status');
+    }
+  };
 
   const fetchChats = async () => {
     try {
@@ -149,7 +165,20 @@ function ChatApp() {
         user={user}
         onLogout={() => { logout(); navigate('/login'); }}
       />
-      <main className="flex-1 min-w-0">
+      <main className="flex-1 min-w-0 flex flex-col">
+        {storageMode === 'json' && (
+          <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 flex items-center justify-center gap-2 text-amber-400 text-xs font-medium">
+            <Zap className="w-3 h-3" />
+            <span>Running in <strong>Temporary Mode</strong> (Local Storage). Messages will be lost on refresh in production. 
+              <button 
+                onClick={() => window.open('https://github.com/geetabandla10/ai-customer-support#setup', '_blank')}
+                className="underline ml-1 hover:text-amber-300"
+              >
+                Learn how to connect MongoDB
+              </button>
+            </span>
+          </div>
+        )}
         <ChatWindow 
           messages={messages as any} 
           onSendMessage={handleSendMessage} 

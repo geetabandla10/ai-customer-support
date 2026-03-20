@@ -83,6 +83,14 @@ const { OAuth2Client } = require('google-auth-library');
 const GOOGLE_CLIENT_ID_FALLBACK = '853185526172-sb7e5lmlvlnd72sojm4t0ldsi5m7jebp.apps.googleusercontent.com';
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID_FALLBACK);
 
+// --- STATUS ROUTE ---
+app.get('/api/status', (req, res) => {
+  res.json({
+    storage: isMongoConnected ? 'mongodb' : 'json',
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
 // --- AUTH ROUTES ---
 app.post(['/api/auth/google', '/auth/google'], async (req, res) => {
   try {
