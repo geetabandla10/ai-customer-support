@@ -28,6 +28,7 @@ const AdminDashboard = () => {
   
   // FAQ Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [editingFaq, setEditingFaq] = useState<FAQ | null>(null);
   const [faqForm, setFaqForm] = useState({ question: '', answer: '' });
 
@@ -60,26 +61,31 @@ const AdminDashboard = () => {
   };
 
   const handleSaveFaq = async () => {
+    setIsSaving(true);
     try {
-      if (editingFaq) {
-        await fetch(`/api/faqs/${editingFaq._id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(faqForm),
-        });
-      } else {
-        await fetch('/api/faqs', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(faqForm),
-        });
+      const url = editingFaq ? `/api/faqs/${editingFaq._id}` : '/api/faqs';
+      const method = editingFaq ? 'PUT' : 'POST';
+      
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(faqForm),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Server error occurred');
       }
+
       setIsModalOpen(false);
       setEditingFaq(null);
       setFaqForm({ question: '', answer: '' });
       fetchFaqs();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error saving FAQ:', err);
+      alert(`Error saving FAQ: ${err.message}. \n\nIMPORTANT: Check if your MongoDB connection is active in the server terminal.`);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -287,10 +293,17 @@ const AdminDashboard = () => {
               </button>
               <button 
                 onClick={handleSaveFaq}
-                disabled={!faqForm.question || !faqForm.answer}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-all"
+                disabled={!faqForm.question || !faqForm.answer || isSaving}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-all flex items-center gap-2"
               >
-                Save FAQ
+                {isSaving ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save FAQ'
+                )}
               </button>
             </div>
           </div>
