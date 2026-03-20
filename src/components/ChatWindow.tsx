@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { Search, Phone, Video, MoreVertical, Sparkles } from 'lucide-react';
+import { Search, MoreVertical, Sparkles } from 'lucide-react';
 import Message from './Message';
 import ChatInput from './ChatInput';
 import TypingIndicator from './TypingIndicator';
@@ -51,13 +51,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, onSendMessage, isTypi
         </div>
 
         <div className="flex items-center gap-2">
-          <button className="p-2.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all">
-            <Phone className="w-5 h-5" />
-          </button>
-          <button className="p-2.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all hidden sm:block">
-            <Video className="w-5 h-5" />
-          </button>
-          <div className="h-6 w-[1px] bg-slate-200 dark:bg-slate-800 mx-1 hidden sm:block" />
           <button className="p-2.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all">
             <Search className="w-5 h-5" />
           </button>
