@@ -36,7 +36,7 @@ function ChatApp() {
 
   const fetchChats = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/chats/${USER_EMAIL}`);
+      const res = await fetch(`/api/chats/${USER_EMAIL}`);
       if (res.ok) {
         const data = await res.json();
         setChats(data);
@@ -48,7 +48,7 @@ function ChatApp() {
 
   const fetchMessages = async (chatId: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/messages/${chatId}`);
+      const res = await fetch(`/api/messages/${chatId}`);
       if (res.ok) {
         const data = await res.json();
         setMessages(data.map((m: any) => ({
@@ -86,7 +86,7 @@ function ChatApp() {
     setIsTyping(true);
     
     try {
-      const response = await fetch('http://localhost:5000/api/chat', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

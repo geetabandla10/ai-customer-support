@@ -41,7 +41,7 @@ const AdminDashboard = () => {
 
   const fetchFaqs = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/faqs');
+      const res = await fetch('/api/faqs');
       const data = await res.json();
       setFaqs(data);
     } catch (err) {
@@ -51,7 +51,7 @@ const AdminDashboard = () => {
 
   const fetchChats = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/admin/chats');
+      const res = await fetch('/api/admin/chats');
       const data = await res.json();
       setChats(data);
     } catch (err) {
@@ -62,13 +62,13 @@ const AdminDashboard = () => {
   const handleSaveFaq = async () => {
     try {
       if (editingFaq) {
-        await fetch(`http://localhost:5000/api/faqs/${editingFaq._id}`, {
+        await fetch(`/api/faqs/${editingFaq._id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(faqForm),
         });
       } else {
-        await fetch('http://localhost:5000/api/faqs', {
+        await fetch('/api/faqs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(faqForm),
@@ -86,7 +86,7 @@ const AdminDashboard = () => {
   const handleDeleteFaq = async (id: string) => {
     try {
       if (!confirm('Are you sure you want to delete this FAQ?')) return;
-      await fetch(`http://localhost:5000/api/faqs/${id}`, { method: 'DELETE' });
+      await fetch(`/api/faqs/${id}`, { method: 'DELETE' });
       fetchFaqs();
     } catch (err) {
       console.error('Error deleting FAQ:', err);
