@@ -98,8 +98,13 @@ function ChatApp() {
         }),
       });
 
+      let errorMessage = 'Failed to connect. Please check server logs or Vercel config.';
       if (!response.ok) {
-        throw new Error('Failed to fetch bot response');
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch(e) {}
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -116,11 +121,11 @@ function ChatApp() {
       }
       // Refresh chat list to update lastMessage and title
       fetchChats();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching bot response:', error);
       setMessages((prev) => [...prev, {
         id: Date.now().toString(),
-        content: "Sorry, I'm having trouble connecting to the server. Please check if the backend is running.",
+        content: `Error: ${error.message || 'Failed to connect. Please check browser console for details.'}`,
         isBot: true,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       }]);
