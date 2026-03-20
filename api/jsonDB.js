@@ -62,6 +62,23 @@ const jsonDB = {
     findOne: async (query) => {
       const db = readDB();
       return db.users.find(u => Object.keys(query).every(k => u[k] === query[k]));
+    },
+    create: async (data) => {
+      const db = readDB();
+      const newUser = { _id: Date.now().toString(), ...data, createdAt: new Date().toISOString() };
+      db.users.push(newUser);
+      writeDB(db);
+      return newUser;
+    },
+    findByIdAndUpdate: async (id, data) => {
+      const db = readDB();
+      const index = db.users.findIndex(u => u._id === id);
+      if (index !== -1) {
+        db.users[index] = { ...db.users[index], ...data, updatedAt: Date.now() };
+        writeDB(db);
+        return db.users[index];
+      }
+      return null;
     }
   },
   chats: {

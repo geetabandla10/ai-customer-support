@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "serve": "npm run build && node api/index.js"
+    "serve": "npm run build && node api/index.js",
+    "start": "npm run serve"
   },
   "dependencies": {
     "@react-oauth/google": "^0.13.4",

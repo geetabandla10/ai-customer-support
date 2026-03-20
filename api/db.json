@@ -5,9 +5,276 @@
       "name": "Tharun Bandla",
       "email": "tharun@example.com",
       "avatar": "TB"
+    },
+    {
+      "_id": "1774027421947",
+      "name": "Geeta Bandla",
+      "email": "geetabandla10@gmail.com",
+      "avatar": "GB",
+      "picture": "https://lh3.googleusercontent.com/a/ACg8ocLZNMf9Bhd3unA2FHDtas90BGxeNRj94GDuQ-kDjtIDT6jK=s96-c",
+      "createdAt": "2026-03-20T17:23:41.948Z"
+    },
+    {
+      "_id": "1774027507301",
+      "name": "Sri balajipg",
+      "email": "sribalajipg13@gmail.com",
+      "avatar": "SB",
+      "picture": "https://lh3.googleusercontent.com/a/ACg8ocJEHrntE0Caz1IHz6xccAB87g1OJ4mm_PSv6RNeN-PkS5ELpQ=s96-c",
+      "createdAt": "2026-03-20T17:25:07.301Z"
+    },
+    {
+      "_id": "1774027815883",
+      "name": "Geeta Bandla",
+      "email": "geetabandla11@gmail.com",
+      "avatar": "GB",
+      "picture": "https://lh3.googleusercontent.com/a/ACg8ocJxn7sckjyV8YYQNVLZgpzSKo5WiAB6AAVRhTlMPyC-9ilHew=s96-c",
+      "createdAt": "2026-03-20T17:30:15.883Z"
+    },
+    {
+      "_id": "1774027884934",
+      "name": "Hema Bandla",
+      "email": "hemabandla13@gmail.com",
+      "avatar": "HB",
+      "picture": "https://lh3.googleusercontent.com/a/ACg8ocL1oAv5OXoJBgyHomh3v9zZIp1krpgXvbdndlIcYBrX16yvMQ=s96-c",
+      "createdAt": "2026-03-20T17:31:24.934Z"
     }
   ],
-  "chats": [],
-  "messages": [],
+  "chats": [
+    {
+      "_id": "1774028929747",
+      "userId": "1774027421947",
+      "title": "tell me the current status abo...",
+      "lastMessage": "tell me the current status about war",
+      "updatedAt": 1774028929747
+    },
+    {
+      "_id": "1774029704649",
+      "userId": "1774027421947",
+      "title": "tell me about the current upda...",
+      "lastMessage": "tell me about the current updates about news",
+      "updatedAt": 1774029704649
+    },
+    {
+      "_id": "1774029789698",
+      "userId": "1774027421947",
+      "title": "tell the current updates about...",
+      "lastMessage": "tell the current updates about lpg crises",
+      "updatedAt": 1774029789698
+    },
+    {
+      "_id": "1774029915152",
+      "userId": "1774027421947",
+      "title": "tell the current updates about...",
+      "lastMessage": "I'm currently experiencing high demand and having trouble reaching my AI brain. However, I'm here to help! Could you please tell me more about your issue, or try again in a few moments? You can also check our FAQ section for immediate answers.",
+      "updatedAt": 1774030021621
+    },
+    {
+      "_id": "1774030180249",
+      "userId": "1774027421947",
+      "title": "what domain is your ai custome...",
+      "lastMessage": "I'm currently in 'Demo Mode' because the connected AI account (OpenRouter) has run out of credits. 💡 **Rectification**: You can restore my full intelligence by adding credits to your OpenRouter account or providing a new API key in the server/.env file. In the meantime, I can still answer basic questions from our FAQ!",
+      "updatedAt": 1774030182610
+    },
+    {
+      "_id": "1774030348699",
+      "userId": "1774027421947",
+      "title": "do u offer refunds",
+      "lastMessage": "I appreciate your patience. While my external AI brain is being recharged with credits, I'm here to assist you manually. Could you please provide more details about your inquiry? I'll do my best to help from our knowledge base!",
+      "updatedAt": 1774030421509
+    },
+    {
+      "_id": "1774030541370",
+      "userId": "1774027421947",
+      "title": "tell me about current war upda...",
+      "lastMessage": "I'm here to assist! Since I'm in optimized local mode, could you try rephrasing that or checking our FAQ section?",
+      "updatedAt": 1774030618635
+    }
+  ],
+  "messages": [
+    {
+      "_id": "1774028929848",
+      "chatId": "1774028929747",
+      "content": "tell me the current status about war",
+      "isBot": false,
+      "timestamp": "11:18 pm",
+      "createdAt": "2026-03-20T17:48:49.848Z"
+    },
+    {
+      "_id": "1774029704705",
+      "chatId": "1774029704649",
+      "content": "tell me about the current updates about news",
+      "isBot": false,
+      "timestamp": "11:31 pm",
+      "createdAt": "2026-03-20T18:01:44.705Z"
+    },
+    {
+      "_id": "1774029789749",
+      "chatId": "1774029789698",
+      "content": "tell the current updates about lpg crises",
+      "isBot": false,
+      "timestamp": "11:33 pm",
+      "createdAt": "2026-03-20T18:03:09.749Z"
+    },
+    {
+      "_id": "1774029915203",
+      "chatId": "1774029915152",
+      "content": "tell the current updates about lpg crises",
+      "isBot": false,
+      "timestamp": "11:35 pm",
+      "createdAt": "2026-03-20T18:05:15.203Z"
+    },
+    {
+      "_id": "1774029927726",
+      "chatId": "1774029915152",
+      "content": "I'm currently experiencing high demand and having trouble reaching my AI brain. However, I'm here to help! Could you please tell me more about your issue, or try again in a few moments? You can also check our FAQ section for immediate answers.",
+      "isBot": true,
+      "timestamp": "11:35 pm",
+      "createdAt": "2026-03-20T18:05:27.727Z"
+    },
+    {
+      "_id": "1774030020108",
+      "chatId": "1774029915152",
+      "content": "where is my order",
+      "isBot": false,
+      "timestamp": "11:37 pm",
+      "createdAt": "2026-03-20T18:07:00.108Z"
+    },
+    {
+      "_id": "1774030021620",
+      "chatId": "1774029915152",
+      "content": "I'm currently experiencing high demand and having trouble reaching my AI brain. However, I'm here to help! Could you please tell me more about your issue, or try again in a few moments? You can also check our FAQ section for immediate answers.",
+      "isBot": true,
+      "timestamp": "11:37 pm",
+      "createdAt": "2026-03-20T18:07:01.620Z"
+    },
+    {
+      "_id": "1774030180316",
+      "chatId": "1774030180249",
+      "content": "what domain is your ai customer support for",
+      "isBot": false,
+      "timestamp": "11:39 pm",
+      "createdAt": "2026-03-20T18:09:40.316Z"
+    },
+    {
+      "_id": "1774030182608",
+      "chatId": "1774030180249",
+      "content": "I'm currently in 'Demo Mode' because the connected AI account (OpenRouter) has run out of credits. 💡 **Rectification**: You can restore my full intelligence by adding credits to your OpenRouter account or providing a new API key in the server/.env file. In the meantime, I can still answer basic questions from our FAQ!",
+      "isBot": true,
+      "timestamp": "11:39 pm",
+      "createdAt": "2026-03-20T18:09:42.608Z"
+    },
+    {
+      "_id": "1774030348773",
+      "chatId": "1774030348699",
+      "content": "do u offer refunds",
+      "isBot": false,
+      "timestamp": "11:42 pm",
+      "createdAt": "2026-03-20T18:12:28.773Z"
+    },
+    {
+      "_id": "1774030350142",
+      "chatId": "1774030348699",
+      "content": "I appreciate your patience. While my external AI brain is being recharged with credits, I'm here to assist you manually. Could you please provide more details about your inquiry? I'll do my best to help from our knowledge base!",
+      "isBot": true,
+      "timestamp": "11:42 pm",
+      "createdAt": "2026-03-20T18:12:30.142Z"
+    },
+    {
+      "_id": "1774030364752",
+      "chatId": "1774030348699",
+      "content": "where is my order",
+      "isBot": false,
+      "timestamp": "11:42 pm",
+      "createdAt": "2026-03-20T18:12:44.752Z"
+    },
+    {
+      "_id": "1774030372557",
+      "chatId": "1774030348699",
+      "content": "I appreciate your patience. While my external AI brain is being recharged with credits, I'm here to assist you manually. Could you please provide more details about your inquiry? I'll do my best to help from our knowledge base!",
+      "isBot": true,
+      "timestamp": "11:42 pm",
+      "createdAt": "2026-03-20T18:12:52.557Z"
+    },
+    {
+      "_id": "1774030413214",
+      "chatId": "1774030348699",
+      "content": "tell me about current war updates",
+      "isBot": false,
+      "timestamp": "11:43 pm",
+      "createdAt": "2026-03-20T18:13:33.214Z"
+    },
+    {
+      "_id": "1774030421507",
+      "chatId": "1774030348699",
+      "content": "I appreciate your patience. While my external AI brain is being recharged with credits, I'm here to assist you manually. Could you please provide more details about your inquiry? I'll do my best to help from our knowledge base!",
+      "isBot": true,
+      "timestamp": "11:43 pm",
+      "createdAt": "2026-03-20T18:13:41.507Z"
+    },
+    {
+      "_id": "1774030541427",
+      "chatId": "1774030541370",
+      "content": "tell me about current war updates",
+      "isBot": false,
+      "timestamp": "11:45 pm",
+      "createdAt": "2026-03-20T18:15:41.427Z"
+    },
+    {
+      "_id": "1774030543009",
+      "chatId": "1774030541370",
+      "content": "I'm scanning our knowledge base for that... in the meantime, could you specify if this is a technical or a billing question?",
+      "isBot": true,
+      "timestamp": "11:45 pm",
+      "createdAt": "2026-03-20T18:15:43.009Z"
+    },
+    {
+      "_id": "1774030564347",
+      "chatId": "1774030541370",
+      "content": "do you offer refunds",
+      "isBot": false,
+      "timestamp": "11:46 pm",
+      "createdAt": "2026-03-20T18:16:04.347Z"
+    },
+    {
+      "_id": "1774030571427",
+      "chatId": "1774030541370",
+      "content": "That's an interesting question! Could you tell me a bit more so I can find the best answer for you?",
+      "isBot": true,
+      "timestamp": "11:46 pm",
+      "createdAt": "2026-03-20T18:16:11.427Z"
+    },
+    {
+      "_id": "1774030595645",
+      "chatId": "1774030541370",
+      "content": "do u offer refunds for the damaged product",
+      "isBot": false,
+      "timestamp": "11:46 pm",
+      "createdAt": "2026-03-20T18:16:35.645Z"
+    },
+    {
+      "_id": "1774030596790",
+      "chatId": "1774030541370",
+      "content": "That's an interesting question! Could you tell me a bit more so I can find the best answer for you?",
+      "isBot": true,
+      "timestamp": "11:46 pm",
+      "createdAt": "2026-03-20T18:16:36.790Z"
+    },
+    {
+      "_id": "1774030614469",
+      "chatId": "1774030541370",
+      "content": "thats it guve me the answer",
+      "isBot": false,
+      "timestamp": "11:46 pm",
+      "createdAt": "2026-03-20T18:16:54.469Z"
+    },
+    {
+      "_id": "1774030618633",
+      "chatId": "1774030541370",
+      "content": "I'm here to assist! Since I'm in optimized local mode, could you try rephrasing that or checking our FAQ section?",
+      "isBot": true,
+      "timestamp": "11:46 pm",
+      "createdAt": "2026-03-20T18:16:58.633Z"
+    }
+  ],
   "faqs": []
 }
