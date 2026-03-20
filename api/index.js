@@ -41,7 +41,7 @@ mongoose.connect(MONGODB_URI)
 
 // --- ADMIN ROUTES ---
 // Get all users and chats for Admin
-app.get('/api/admin/chats', async (req, res) => {
+app.get(['/api/admin/chats', '/admin/chats'], async (req, res) => {
   try {
     const chats = await Chat.find()
       .populate('userId', 'name email avatar')
@@ -53,7 +53,7 @@ app.get('/api/admin/chats', async (req, res) => {
 });
 
 // --- FAQ ROUTES ---
-app.get('/api/faqs', async (req, res) => {
+app.get(['/api/faqs', '/faqs'], async (req, res) => {
   try {
     const faqs = await FAQ.find().sort({ createdAt: -1 });
     res.json(faqs);
@@ -62,7 +62,7 @@ app.get('/api/faqs', async (req, res) => {
   }
 });
 
-app.post('/api/faqs', async (req, res) => {
+app.post(['/api/faqs', '/faqs'], async (req, res) => {
   try {
     const { question, answer } = req.body;
     const newFaq = await FAQ.create({ question, answer });
@@ -72,7 +72,7 @@ app.post('/api/faqs', async (req, res) => {
   }
 });
 
-app.put('/api/faqs/:id', async (req, res) => {
+app.put(['/api/faqs/:id', '/faqs/:id'], async (req, res) => {
   try {
     const { question, answer } = req.body;
     const updatedFaq = await FAQ.findByIdAndUpdate(
@@ -86,7 +86,7 @@ app.put('/api/faqs/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/faqs/:id', async (req, res) => {
+app.delete(['/api/faqs/:id', '/faqs/:id'], async (req, res) => {
   try {
     await FAQ.findByIdAndDelete(req.params.id);
     res.json({ success: true });
@@ -96,7 +96,7 @@ app.delete('/api/faqs/:id', async (req, res) => {
 });
 
 // Get all chats for a user
-app.get('/api/chats/:email', async (req, res) => {
+app.get(['/api/chats/:email', '/chats/:email'], async (req, res) => {
   try {
     const user = await User.findOne({ email: req.params.email });
     if (!user) return res.status(440).json({ error: 'User not found' });
@@ -109,7 +109,7 @@ app.get('/api/chats/:email', async (req, res) => {
 });
 
 // Get messages for a chat
-app.get('/api/messages/:chatId', async (req, res) => {
+app.get(['/api/messages/:chatId', '/messages/:chatId'], async (req, res) => {
   try {
     const messages = await Message.find({ chatId: req.params.chatId }).sort({ createdAt: 1 });
     res.json(messages);
@@ -119,7 +119,7 @@ app.get('/api/messages/:chatId', async (req, res) => {
 });
 
 // Chat endpoint with persistence
-app.post('/api/chat', async (req, res) => {
+app.post(['/api/chat', '/chat'], async (req, res) => {
   const { message, email, chatId } = req.body;
   
   if (!process.env.OPENROUTER_API_KEY && (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'your_openai_api_key_here')) {
