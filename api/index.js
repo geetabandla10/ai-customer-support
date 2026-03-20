@@ -2,7 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const OpenAI = require('openai');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 
 const User = require('./models/User');
 const Chat = require('./models/Chat');
@@ -13,19 +14,27 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/chat-support';
 
-// Initialize OpenAI using OpenRouter
+// Initialize OpenAI using OpenRouter (with dummy fallback to prevent fatal startup crash)
 const openai = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
-  apiKey: process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || 'dummy_key_to_prevent_fatal_crash',
 });
 
 app.use(cors());
 app.use(express.json());
 
 // Connect to MongoDB
-mongoose.connect(MONGODB_URI)
+if (!process.env.MONGODB_URI && (require.main === module || process.env.NODE_ENV !== 'production')) {
+  console.log('⚠️  WARNING: MONGODB_URI is missing from your .env file!');
+  console.log('👉 Please add: MONGODB_URI="your_mongodb_atlas_string_here" to your api/.env file.');
+  console.log('🔗 Follow the steps I provided earlier to get your Atlas string.');
+}
+
+mongoose.connect(MONGODB_URI, {
+  serverSelectionTimeoutMS: 5000, // Fail after 5s instead of 30s+
+})
   .then(async () => {
-    console.log('Connected to MongoDB');
+    console.log('✅ Connected to MongoDB successfully');
     // Ensure a default user exists for demonstration
     const userCount = await User.countDocuments();
     if (userCount === 0) {
@@ -37,7 +46,12 @@ mongoose.connect(MONGODB_URI)
       console.log('Default user created');
     }
   })
-  .catch(err => console.error('MongoDB connection error:', err));
+  .catch(err => {
+    console.error('❌ MongoDB Connection Error:', err.message);
+    if (err.message.includes('buffering timed out')) {
+      console.log('💡 TIP: This usually means your IP is not whitelisted on MongoDB Atlas or your URI is incorrect.');
+    }
+  });
 
 // --- ADMIN ROUTES ---
 // Get all users and chats for Admin
@@ -218,9 +232,18 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
   }
 });
 
-if (process.env.NODE_ENV !== 'production' && require.main === module) {
+// Serve static frontend natively for a unified single local link
+if (process.env.NODE_ENV !== 'production' || require.main === module) {
+  const path = require('path');
+  app.use(express.static(path.join(__dirname, '../dist')));
+  
+  app.use((req, res) => {
+    res.sendFile(path.join(__dirname, '../dist', 'index.html'));
+  });
+
   app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`Unified Server is running on port ${PORT}`);
+    console.log(`Access the full app at: http://localhost:${PORT}`);
   });
 }
 
