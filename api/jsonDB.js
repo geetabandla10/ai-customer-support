@@ -15,9 +15,19 @@ const defaultData = {
   faqs: []
 };
 
+let memoryData = null;
+
 function readDB() {
+  if (memoryData) return memoryData;
+  
   if (!fs.existsSync(DB_FILE)) {
-    fs.writeFileSync(DB_FILE, JSON.stringify(defaultData, null, 2));
+    try {
+      fs.writeFileSync(DB_FILE, JSON.stringify(defaultData, null, 2));
+    } catch (e) {
+      console.warn('⚠️  Read-only filesystem detected. Using in-memory store.');
+      memoryData = JSON.parse(JSON.stringify(defaultData));
+      return memoryData;
+    }
     return defaultData;
   }
   try {
@@ -28,7 +38,12 @@ function readDB() {
 }
 
 function writeDB(data) {
-  fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+  } catch (e) {
+    // On Vercel, we just keep it in memory for the life of the lambda
+    memoryData = data;
+  }
 }
 
 const jsonDB = {
