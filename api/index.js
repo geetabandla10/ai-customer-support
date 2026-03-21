@@ -38,14 +38,9 @@ app.use((req, res, next) => {
 let isMongoConnected = false;
 
 // Connect to MongoDB
-if (!process.env.MONGODB_URI && (require.main === module || process.env.NODE_ENV !== 'production')) {
-  console.log('⚠️  WARNING: MONGODB_URI is missing from your .env file!');
-  console.log('👉 Please add: MONGODB_URI="your_mongodb_atlas_string_here" to your api/.env file.');
-  console.log('💡 RECTIFYING: Falling back to local db.json storage for now.');
-}
-
-mongoose.connect(MONGODB_URI, {
-  serverSelectionTimeoutMS: 5000, 
+const mongoPromise = mongoose.connect(MONGODB_URI, {
+  serverSelectionTimeoutMS: 10000,
+  connectTimeoutMS: 10000,
 })
   .then(async () => {
     console.log('✅ Connected to MongoDB successfully');
@@ -65,6 +60,14 @@ mongoose.connect(MONGODB_URI, {
     isMongoConnected = false;
     global.lastMongoError = err.message;
   });
+
+// Middleware: wait for MongoDB connection attempt to finish before handling API requests
+app.use('/api', async (req, res, next) => {
+  if (req.path === '/status') return next(); // skip for status route
+  try { await mongoPromise; } catch (e) { /* handled above */ }
+  next();
+});
+
 
 // Abstraction for Database (Switch between Mongo and JSON)
 const jsonDB = require('./jsonDB');
