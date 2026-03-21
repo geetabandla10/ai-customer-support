@@ -19,10 +19,10 @@ const MONGODB_URI = process.env.ATLAS_URI || process.env.MONGODB_URI || 'mongodb
 // Initialize OpenAI using OpenRouter (with dummy fallback to prevent fatal startup crash)
 const openai = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
-  apiKey: process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || 'dummy_key_to_prevent_fatal_crash',
+  apiKey: process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || 'sk-dummy-key-for-build',
   defaultHeaders: {
     "HTTP-Referer": "https://ai-customer-support-orcin-gamma.vercel.app",
-    "X-Title": "SupportAI",
+    "X-Title": "AI Customer Support",
   }
 });
 
@@ -94,6 +94,8 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || GOOGLE_CLI
 app.get('/api/status', (req, res) => {
   const uri = process.env.ATLAS_URI || process.env.MONGODB_URI;
   const mongoUriPrefix = uri ? uri.substring(0, 15) : 'N/A';
+  const aiKey = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
+  const aiKeyPreview = aiKey ? aiKey.substring(0, 8) + '...' : 'none';
   
   res.json({
     storage: isMongoConnected ? 'mongodb' : 'json',
@@ -102,7 +104,8 @@ app.get('/api/status', (req, res) => {
     hasAtlasUri: !!process.env.ATLAS_URI,
     hasMongoUri: !!process.env.MONGODB_URI,
     mongoUriPreview: mongoUriPrefix + '...',
-    aiKeyPresent: !!(process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY)
+    aiKeyPresent: !!aiKey,
+    aiKeyPreview: aiKeyPreview
   });
 });
 
@@ -336,7 +339,7 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
 
       try {
         const completion = await openai.chat.completions.create({
-          model: "microsoft/phi-3-mini-128k-instruct:free",
+          model: "openrouter/auto",
           messages: [
             {
               role: "system",
