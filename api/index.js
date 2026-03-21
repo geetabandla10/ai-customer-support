@@ -94,7 +94,9 @@ const GOOGLE_CLIENT_ID_FALLBACK = '853185526172-sb7e5lmlvlnd72sojm4t0ldsi5m7jebp
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID_FALLBACK);
 
 // --- STATUS ROUTE ---
-app.get('/api/status', (req, res) => {
+app.get('/api/status', async (req, res) => {
+  try { await mongoPromise; } catch (e) { /* handled above */ }
+
   const uri = process.env.ATLAS_URI || process.env.MONGODB_URI;
   const mongoUriPrefix = uri ? uri.substring(0, 15) : 'N/A';
   const aiKey = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
