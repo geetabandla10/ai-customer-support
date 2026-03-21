@@ -14,7 +14,7 @@ const FAQ = require('./models/FAQ');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/chat-support';
+const MONGODB_URI = process.env.ATLAS_URI || process.env.MONGODB_URI || 'mongodb://localhost:27017/chat-support';
 
 // Initialize OpenAI using OpenRouter (with dummy fallback to prevent fatal startup crash)
 const openai = new OpenAI({
@@ -335,7 +335,7 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
 
       try {
         const completion = await openai.chat.completions.create({
-          model: "openai/gpt-4o-mini",
+          model: "meta-llama/llama-3.1-8b-instruct:free",
           messages: [
             {
               role: "system",
