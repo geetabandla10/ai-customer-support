@@ -92,10 +92,15 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || GOOGLE_CLI
 
 // --- STATUS ROUTE ---
 app.get('/api/status', (req, res) => {
+  const mongoUriSource = process.env.MONGODB_URI ? 
+    (process.env.MONGODB_URI.includes('your_mongodb_uri') ? 'placeholder' : 'actual') : 'none';
+    
   res.json({
     storage: isMongoConnected ? 'mongodb' : 'json',
     environment: process.env.NODE_ENV || 'development',
     mongoError: global.lastMongoError || null,
+    mongoUriStatus: mongoUriSource,
+    mongoUriPreview: process.env.MONGODB_URI ? process.env.MONGODB_URI.substring(0, 15) + '...' : 'N/A',
     aiKeyPresent: !!(process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY)
   });
 });
@@ -330,7 +335,7 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
 
       try {
         const completion = await openai.chat.completions.create({
-          model: "google/gemini-2.0-flash-lite-preview-02-05:free",
+          model: "mistralai/mistral-7b-instruct:free",
           messages: [
             {
               role: "system",
