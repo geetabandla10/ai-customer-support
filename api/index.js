@@ -104,6 +104,7 @@ app.get('/api/status', async (req, res) => {
   
   res.json({
     storage: isMongoConnected ? 'mongodb' : 'json',
+    mongoReadyState: mongoose.connection.readyState,
     environment: process.env.NODE_ENV || 'production',
     mongoError: global.lastMongoError || null,
     hasAtlasUri: !!process.env.ATLAS_URI,
