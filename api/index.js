@@ -339,7 +339,7 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
 
       try {
         const completion = await openai.chat.completions.create({
-          model: "openrouter/auto",
+          model: "minimax/minimax-m2.5:free",
           messages: [
             {
               role: "system",
@@ -418,9 +418,9 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
     currentChat.lastMessage = aiResponse;
     currentChat.updatedAt = Date.now();
     
-    if (isMongoConnected) {
+    if (isMongoConnected && typeof currentChat.save === 'function') {
       await currentChat.save();
-    } else {
+    } else if (ChatDb && typeof ChatDb.save === 'function') {
       await ChatDb.save(currentChat);
     }
 
