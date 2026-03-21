@@ -63,6 +63,7 @@ mongoose.connect(MONGODB_URI, {
     console.warn('❌ MongoDB Error:', err.message);
     console.log('🚀 Using Local JSON Fallback (db.json)');
     isMongoConnected = false;
+    global.lastMongoError = err.message;
   });
 
 // Abstraction for Database (Switch between Mongo and JSON)
@@ -93,7 +94,9 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || GOOGLE_CLI
 app.get('/api/status', (req, res) => {
   res.json({
     storage: isMongoConnected ? 'mongodb' : 'json',
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    mongoError: global.lastMongoError || null,
+    aiKeyPresent: !!(process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY)
   });
 });
 
@@ -345,6 +348,8 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
         console.error('AI API Error:', aiErr.message);
         console.error('AI Error details:', aiErr);
         
+        const errorNote = `[DEBUG] AI Error: ${aiErr.message}. `;
+        
         // --- UPGRADED INTELLIGENT MOCK ENGINE ---
         const msg = message.toLowerCase();
         const words = msg.split(/\W+/).filter(w => w.length > 2);
@@ -364,19 +369,19 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
         });
         
         if (highestScore > 0 && bestMatch) {
-          aiResponse = bestMatch.answer;
+          aiResponse = errorNote + bestMatch.answer;
         } 
         // 2. Pattern-based responses for common intents
         else if (msg.includes('hello') || msg.includes('hi ') || msg === 'hi') {
-          aiResponse = "Hello! I'm your SupportAI assistant. I'm currently running in a smart offline mode while my AI core is being updated, but I can still answer your questions!";
+          aiResponse = errorNote + "Hello! I'm your SupportAI assistant. I'm currently running in a smart offline mode while my AI core is being updated, but I can still answer your questions!";
         } else if (msg.includes('price') || msg.includes('cost') || msg.includes('pack') || msg.includes('pay')) {
-          aiResponse = "Our pricing starts at $19/month for the Basic tier. We also have a $49/month Pro tier for high-volume support. Which one would you like to know more about?";
+          aiResponse = errorNote + "Our pricing starts at $19/month for the Basic tier. We also have a $49/month Pro tier for high-volume support. Which one would you like to know more about?";
         } else if (msg.includes('help') || msg.includes('support') || msg.includes('contact')) {
-          aiResponse = "I'm here to help! You can ask me about our features, pricing, or setup process. If you need to speak to a human, you can email us at support@example.com.";
+          aiResponse = errorNote + "I'm here to help! You can ask me about our features, pricing, or setup process. If you need to speak to a human, you can email us at support@example.com.";
         } else if (msg.includes('setup') || msg.includes('install') || msg.includes('use')) {
-          aiResponse = "Setting up SupportAI is simple. You just need to include our client SDK in your project and initialize it with your API key. Would you like the documentation link?";
+          aiResponse = errorNote + "Setting up SupportAI is simple. You just need to include our client SDK in your project and initialize it with your API key. Would you like the documentation link?";
         } else if (msg.includes('api') || msg.includes('credit') || msg.includes('err')) {
-          aiResponse = "I've detected a connectivity issue with our main AI provider (Credits needed). I'm currently assisting you using my built-in knowledge base! Is there something specific in the FAQ I can help with?";
+          aiResponse = errorNote + "I've detected a connectivity issue with our main AI provider (Credits needed). I'm currently assisting you using my built-in knowledge base! Is there something specific in the FAQ I can help with?";
         } else {
           // 3. Dynamic Fallback to avoid repetition
           const fallbacks = [
@@ -385,7 +390,7 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
             "I'm here to assist! Since I'm in optimized local mode, could you try rephrasing that or checking our FAQ section?",
             "I want to make sure I give you the right info. Are you asking about our features or how to get started?"
           ];
-          aiResponse = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+          aiResponse = errorNote + fallbacks[Math.floor(Math.random() * fallbacks.length)];
         }
       }
     }
