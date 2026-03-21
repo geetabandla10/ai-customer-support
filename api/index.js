@@ -18,6 +18,10 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/chat-s
 const openai = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
   apiKey: process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || 'dummy_key_to_prevent_fatal_crash',
+  defaultHeaders: {
+    "HTTP-Referer": "https://ai-customer-support-orcin-gamma.vercel.app",
+    "X-Title": "SupportAI",
+  }
 });
 
 app.use(cors());
@@ -331,6 +335,7 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
         aiResponse = completion.choices[0].message.content;
       } catch (aiErr) {
         console.error('AI API Error:', aiErr.message);
+        console.error('AI Error details:', aiErr);
         
         // --- UPGRADED INTELLIGENT MOCK ENGINE ---
         const msg = message.toLowerCase();
