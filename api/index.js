@@ -87,7 +87,12 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || GOOGLE_CLI
 app.get('/api/status', (req, res) => {
   res.json({
     storage: isMongoConnected ? 'mongodb' : 'json',
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    keys: {
+      openrouter: !!process.env.OPENROUTER_API_KEY,
+      openai: !!process.env.OPENAI_API_KEY,
+      openai_default: process.env.OPENAI_API_KEY === 'your_openai_api_key_here'
+    }
   });
 });
 
