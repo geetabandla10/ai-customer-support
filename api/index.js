@@ -92,15 +92,16 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || GOOGLE_CLI
 
 // --- STATUS ROUTE ---
 app.get('/api/status', (req, res) => {
-  const mongoUriSource = process.env.MONGODB_URI ? 
-    (process.env.MONGODB_URI.includes('your_mongodb_uri') ? 'placeholder' : 'actual') : 'none';
-    
+  const uri = process.env.ATLAS_URI || process.env.MONGODB_URI;
+  const mongoUriPrefix = uri ? uri.substring(0, 15) : 'N/A';
+  
   res.json({
     storage: isMongoConnected ? 'mongodb' : 'json',
-    environment: process.env.NODE_ENV || 'development',
+    environment: process.env.NODE_ENV || 'production',
     mongoError: global.lastMongoError || null,
-    mongoUriStatus: mongoUriSource,
-    mongoUriPreview: process.env.MONGODB_URI ? process.env.MONGODB_URI.substring(0, 15) + '...' : 'N/A',
+    hasAtlasUri: !!process.env.ATLAS_URI,
+    hasMongoUri: !!process.env.MONGODB_URI,
+    mongoUriPreview: mongoUriPrefix + '...',
     aiKeyPresent: !!(process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY)
   });
 });
@@ -335,7 +336,7 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
 
       try {
         const completion = await openai.chat.completions.create({
-          model: "google/gemini-2.0-flash-lite-preview-02-05:free",
+          model: "microsoft/phi-3-mini-128k-instruct:free",
           messages: [
             {
               role: "system",
