@@ -339,7 +339,7 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
 
       try {
         const completion = await openai.chat.completions.create({
-          model: "minimax/minimax-m2.5:free",
+          model: "nousresearch/hermes-3-llama-3.1-405b:free",
           messages: [
             {
               role: "system",
@@ -351,19 +351,19 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
             }))),
             { role: "user", content: message }
           ],
+          provider: {
+            allow_fallbacks: true,
+            data_collection: "allow"
+          }
         });
         aiResponse = completion.choices[0].message.content;
       } catch (aiErr) {
         console.error('AI API Error:', aiErr.message);
-        console.error('AI Error details:', aiErr);
         
-        const errorNote = `[DEBUG] AI Error: ${aiErr.message}. `;
-        
-        // --- UPGRADED INTELLIGENT MOCK ENGINE ---
+        // --- INTELLIGENT FALLBACK ENGINE (no debug prefix for users) ---
         const msg = message.toLowerCase();
         const words = msg.split(/\W+/).filter(w => w.length > 2);
         
-        // 1. Try Scoring FAQs by word overlap
         let bestMatch = null;
         let highestScore = 0;
         
@@ -378,28 +378,27 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
         });
         
         if (highestScore > 0 && bestMatch) {
-          aiResponse = errorNote + bestMatch.answer;
-        } 
-        // 2. Pattern-based responses for common intents
-        else if (msg.includes('hello') || msg.includes('hi ') || msg === 'hi') {
-          aiResponse = errorNote + "Hello! I'm your SupportAI assistant. I'm currently running in a smart offline mode while my AI core is being updated, but I can still answer your questions!";
+          aiResponse = bestMatch.answer;
+        } else if (msg.includes('hello') || msg.includes('hi ') || msg === 'hi') {
+          aiResponse = "Hello! I'm your SupportAI assistant. How can I help you today?";
         } else if (msg.includes('price') || msg.includes('cost') || msg.includes('pack') || msg.includes('pay')) {
-          aiResponse = errorNote + "Our pricing starts at $19/month for the Basic tier. We also have a $49/month Pro tier for high-volume support. Which one would you like to know more about?";
+          aiResponse = "Our pricing starts at $19/month for the Basic tier. We also have a $49/month Pro tier for high-volume support. Which one would you like to know more about?";
         } else if (msg.includes('help') || msg.includes('support') || msg.includes('contact')) {
-          aiResponse = errorNote + "I'm here to help! You can ask me about our features, pricing, or setup process. If you need to speak to a human, you can email us at support@example.com.";
+          aiResponse = "I'm here to help! You can ask me about our features, pricing, or setup process. If you need to speak to a human, you can email us at support@example.com.";
         } else if (msg.includes('setup') || msg.includes('install') || msg.includes('use')) {
-          aiResponse = errorNote + "Setting up SupportAI is simple. You just need to include our client SDK in your project and initialize it with your API key. Would you like the documentation link?";
-        } else if (msg.includes('api') || msg.includes('credit') || msg.includes('err')) {
-          aiResponse = errorNote + "I've detected a connectivity issue with our main AI provider (Credits needed). I'm currently assisting you using my built-in knowledge base! Is there something specific in the FAQ I can help with?";
+          aiResponse = "Setting up SupportAI is simple — include our client SDK in your project and initialize it with your API key. Would you like the documentation link?";
+        } else if (msg.includes('refund') || msg.includes('return') || msg.includes('cancel')) {
+          aiResponse = "We offer a 30-day money-back guarantee on all plans. To request a refund, please email support@example.com with your account details.";
+        } else if (msg.includes('feature') || msg.includes('what can') || msg.includes('do you')) {
+          aiResponse = "SupportAI offers AI-powered chat, FAQ management, analytics, and multi-channel support. Would you like details on any specific feature?";
         } else {
-          // 3. Dynamic Fallback to avoid repetition
           const fallbacks = [
-            "That's an interesting question! Could you tell me a bit more so I can find the best answer for you?",
-            "I'm scanning our knowledge base for that... in the meantime, could you specify if this is a technical or a billing question?",
-            "I'm here to assist! Since I'm in optimized local mode, could you try rephrasing that or checking our FAQ section?",
-            "I want to make sure I give you the right info. Are you asking about our features or how to get started?"
+            "That's a great question! Could you provide a bit more detail so I can give you the best answer?",
+            "I'd love to help with that. Could you specify if this is about our features, pricing, or setup?",
+            "Thanks for reaching out! Let me know if you'd like info about our plans, features, or technical setup.",
+            "I'm here to assist! Try asking about our pricing, features, or how to get started."
           ];
-          aiResponse = errorNote + fallbacks[Math.floor(Math.random() * fallbacks.length)];
+          aiResponse = fallbacks[Math.floor(Math.random() * fallbacks.length)];
         }
       }
     }
@@ -418,10 +417,14 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
     currentChat.lastMessage = aiResponse;
     currentChat.updatedAt = Date.now();
     
-    if (isMongoConnected && typeof currentChat.save === 'function') {
-      await currentChat.save();
-    } else if (ChatDb && typeof ChatDb.save === 'function') {
-      await ChatDb.save(currentChat);
+    try {
+      if (currentChat && typeof currentChat.save === 'function') {
+        await currentChat.save();
+      } else if (ChatDb && typeof ChatDb.save === 'function') {
+        await ChatDb.save(currentChat);
+      }
+    } catch (saveError) {
+      console.warn('⚠️  Non-fatal: Failed to save chat state:', saveError.message);
     }
 
     res.json({
