@@ -335,7 +335,7 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
 
       try {
         const completion = await openai.chat.completions.create({
-          model: "mistralai/mistral-7b-instruct:free",
+          model: "google/gemini-2.0-flash-exp:free",
           messages: [
             {
               role: "system",
