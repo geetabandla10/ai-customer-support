@@ -3,7 +3,9 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const OpenAI = require('openai');
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '.env') });
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config({ path: path.resolve(__dirname, '.env') });
+}
 
 const User = require('./models/User');
 const Chat = require('./models/Chat');
@@ -271,8 +273,14 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
     const MsgDb = getDb('Message');
     const FaqDb = getDb('FAQ');
 
-    const user = await UserDb.findOne({ email });
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    let user = await UserDb.findOne({ email });
+    if (!user) {
+      user = await UserDb.create({
+        name: email.split('@')[0],
+        email: email,
+        avatar: email.substring(0, 2).toUpperCase()
+      });
+    }
 
     let currentChat;
     if (chatId) {
@@ -319,7 +327,7 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
 
       try {
         const completion = await openai.chat.completions.create({
-          model: "openrouter/auto",
+          model: "google/gemini-2.0-flash-lite-preview-02-05:free",
           messages: [
             {
               role: "system",
