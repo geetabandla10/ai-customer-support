@@ -196,7 +196,8 @@ app.post(['/api/auth/google', '/auth/google'], async (req, res) => {
     if (credential) {
       try {
         const authClientId = process.env.GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID_FALLBACK;
-        console.log(`🔐 Verifying token with Client ID: ${authClientId}`);
+        console.log(`🔐 [AUTH] Attempting verification for Client ID: ${authClientId}`);
+        console.log(`🎫 [AUTH] Token prefix: ${credential.substring(0, 20)}... (Length: ${credential.length})`);
         
         const ticket = await googleClient.verifyIdToken({
           idToken: credential,
@@ -206,10 +207,19 @@ app.post(['/api/auth/google', '/auth/google'], async (req, res) => {
         email = payload.email;
         name = payload.name;
         picture = payload.picture;
-        console.log(`✅ Verified: ${email}`);
+        console.log(`✅ [AUTH] Verified: ${email}`);
       } catch (verifyError) {
-        console.error('❌ Google Token Verification Failed:', verifyError.message);
-        return res.status(401).json({ error: 'Invalid Google token', details: verifyError.message });
+        console.error('❌ [AUTH] Google Token Verification Failed:', {
+          message: verifyError.message,
+          stack: verifyError.stack?.split('\n').slice(0, 2).join(' '),
+          clientIdUsed: process.env.GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID_FALLBACK,
+          nodeEnv: process.env.NODE_ENV
+        });
+        return res.status(401).json({ 
+          error: 'Invalid Google token', 
+          details: verifyError.message,
+          code: 'GOOGLE_AUTH_FAILURE' 
+        });
       }
     } else {
       // Mock/Guest Fallback

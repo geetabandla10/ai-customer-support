@@ -31,6 +31,7 @@ const LoginPage: React.FC = () => {
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
+        console.error('❌ [AUTH_FRONTEND] Backend returned error:', errorData);
         throw new Error(errorData.error || errorData.details || 'Failed to authenticate');
       }
       const user = await res.json();
