@@ -160,7 +160,7 @@ const getDb = (modelName) => {
 };
 
 const { OAuth2Client } = require('google-auth-library');
-const GOOGLE_CLIENT_ID_FALLBACK = '853185526172-sb7e5lmlvlnd72sojm4t0ldsi5m7jebp.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID_FALLBACK = '863379789902-fa455rs1s1smppabbdqob0h7ca0612b5.apps.googleusercontent.com';
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID_FALLBACK);
 
 // --- STATUS ROUTE ---

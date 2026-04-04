@@ -11,7 +11,7 @@ import UserDashboard from './components/UserDashboard';
 import Layout from './components/Layout';
 
 // Replace with your Google OAuth Client ID from https://console.cloud.google.com
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '853185526172-sb7e5lmlvlnd72sojm4t0ldsi5m7jebp.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '863379789902-fa455rs1s1smppabbdqob0h7ca0612b5.apps.googleusercontent.com';
 
 function App() {
   const location = useLocation();
