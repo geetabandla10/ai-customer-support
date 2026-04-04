@@ -681,7 +681,7 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
         await supabase.from('chats').update({
           last_message: message,
           updated_at: new Date().toISOString()
-        }).eq('id', currentChat.id).catch(e => console.error("Chat update failed:", e.message));
+        }).eq('id', currentChat.id);
       }
       console.log("TRACE 4b: Updated chat");
     }
@@ -694,7 +694,7 @@ app.post(['/api/chat', '/chat'], async (req, res) => {
         content: message,
         is_bot: false,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }]).catch(e => console.error("Message insert failed:", e.message));
+      }]);
       console.log("TRACE 5b: Inserted message");
     }
 
@@ -846,7 +846,7 @@ ${contextText || "No context found in knowledge base."}`;
           await supabase.from('chats').update({
             last_message: fullAiResponse,
             updated_at: new Date().toISOString()
-          }).eq('id', currentChat.id).catch(e => {});
+          }).eq('id', currentChat.id);
         }
 
         res.write(`data: ${JSON.stringify({ done: true, chatId: currentChat.id, timestamp: aiTimestamp, sources })}\n\n`);
