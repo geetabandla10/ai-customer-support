@@ -199,6 +199,16 @@ const LoginPage: React.FC = () => {
         <p className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest opacity-60">
           Powered by DeepSeek R1 Intelligence Network
         </p>
+
+        {/* Global Diagnostic Footer */}
+        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/5 flex flex-col items-center gap-1 opacity-30 hover:opacity-100 transition-opacity">
+          <p className="text-[8px] font-mono text-slate-400 text-center">
+            [DEBUG] Active Client ID: {import.meta.env.VITE_GOOGLE_CLIENT_ID || '863379789902-fa455rs1s1smppabbdqob0h7ca0612b5.apps.googleusercontent.com'}
+          </p>
+          <p className="text-[8px] font-mono text-slate-400 text-center">
+            [DEBUG] Origin: {window.location.origin}
+          </p>
+        </div>
       </motion.div>
     </div>
   );
