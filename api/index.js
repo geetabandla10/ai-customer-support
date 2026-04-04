@@ -789,32 +789,49 @@ ${contextText || "No context found in knowledge base."}`;
     const TIMEOUT_MS = 30000; // 30s timeout for free models
     const GENERIC_ERROR = "Something went wrong. Please try again.";
     let fullAiResponse = "";
+    
+    // Choose starting model
+    let activeModel = isORForChat ? "openai/gpt-4o-mini" : "gpt-4o-mini";
 
     const callAi = async () => {
       console.log(`TRACE 8: AI Request Attempt ${attempt + 1} for user ${email}`);
-      console.log(`DEBUG: [REQ] User: ${email} | Message: ${message.substring(0, 50)}...`);
+      console.log(`DEBUG: [REQ] User: ${email} | Model: ${activeModel}`);
+      
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
       try {
-        const modelName = isORForChat ? "openai/gpt-4o-mini" : "gpt-4o-mini";
-        console.log(`TRACE 8a: Calling ${isORForChat ? 'OpenRouter' : 'OpenAI'} with model ${modelName}...`);
+        console.log(`TRACE 8a: Calling ${isORForChat ? 'OpenRouter' : 'OpenAI'} with model ${activeModel}...`);
         
-      let stream;
-      try {
-        stream = await openai.chat.completions.create({
-          model: modelName,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: message }
-          ],
-          stream: true,
-        }, { signal: controller.signal });
-        console.log("TRACE 8b: Stream opened successfully");
-      } catch (err) {
-        console.error("🎯 ISOLATED OPENAI ERROR:", String(err), "| Message:", err.message, "| Code:", err.code);
-        throw err;
-      }
+        let stream;
+        try {
+          stream = await openai.chat.completions.create({
+            model: activeModel,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: message }
+            ],
+            stream: true,
+          }, { signal: controller.signal });
+          console.log("TRACE 8b: Stream opened successfully");
+        } catch (err) {
+          console.error("🎯 ISOLATED OPENAI ERROR:", String(err), "| Message:", err.message, "| Code:", err.code);
+          
+          // Check for credits failure (402)
+          const isCreditError = err.status === 402 || 
+                                err.message?.toLowerCase().includes('credits') || 
+                                err.message?.toLowerCase().includes('payment');
+                                
+          if (isCreditError && attempt < MAX_RETRIES) {
+             console.warn("💰 [CREDITS] Account empty. Attempting FREE MODEL fallback...");
+             activeModel = "google/gemini-2.0-flash-lite-preview-02-05:free";
+             attempt++;
+             clearTimeout(timeoutId);
+             return callAi();
+          }
+          
+          throw err;
+        }
 
         clearTimeout(timeoutId);
 
@@ -832,7 +849,7 @@ ${contextText || "No context found in knowledge base."}`;
         const aiTimestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         
         if (!currentChat.is_ephemeral) {
-          const { error: msgInsertErr } = await supabase.from('messages').insert([{
+          await supabase.from('messages').insert([{
             chat_id: currentChat.id,
             user_id: email,
             content: fullAiResponse,
@@ -841,8 +858,6 @@ ${contextText || "No context found in knowledge base."}`;
             sources: sources
           }]);
           
-          if (msgInsertErr) console.error("❌ AI Message insert failed:", msgInsertErr.message);
-
           await supabase.from('chats').update({
             last_message: fullAiResponse,
             updated_at: new Date().toISOString()
@@ -854,8 +869,9 @@ ${contextText || "No context found in knowledge base."}`;
         console.log("TRACE 8d: Response ended successfully");
       } catch (err) {
         clearTimeout(timeoutId);
-        console.error(`❌ AI Attempt ${attempt + 1} failed:`, err.message, err.status || err.code || '');
+        console.error(`❌ AI Attempt ${attempt + 1} failed:`, err.message);
         
+        // Final fallback for other errors
         if (attempt < MAX_RETRIES) {
           attempt++;
           console.log(`🔄 Retrying AI call (Attempt ${attempt + 1})...`);
@@ -878,11 +894,13 @@ ${contextText || "No context found in knowledge base."}`;
       stack: error.stack?.split('\n').slice(0, 3).join(' ')
     });
     
-    // Mask internal error for user (PROD DEBUG MODE)
-    const userFriendlyError = `❌ Error: ${error.message}${error.status ? ` (Status: ${error.status})` : ''} - Check Vercel Logs for details.`;
+    // Mask internal error for user (PROD)
+    let userFriendlyError = "Something went wrong. Please try again.";
+    if (error.status === 402 || error.message?.includes('credits')) {
+      userFriendlyError = "Account credits exhausted. Please recharge at openrouter.ai/settings/credits.";
+    }
     res.write(`data: ${JSON.stringify({ text: userFriendlyError, isError: true })}\n\n`);
     
-    // Still persist the error state in DB for context if available
     const aiTimestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     
     if (!currentChat?.is_ephemeral) {
