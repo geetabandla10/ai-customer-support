@@ -797,8 +797,8 @@ ${contextText || "No context found in knowledge base."}`;
       const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
       try {
-        const modelName = "gpt-4o-mini";
-        console.log(`TRACE 8a: Calling OpenAI for ${email} with model ${modelName}...`);
+        const modelName = isORForChat ? "openai/gpt-4o-mini" : "gpt-4o-mini";
+        console.log(`TRACE 8a: Calling ${isORForChat ? 'OpenRouter' : 'OpenAI'} with model ${modelName}...`);
         
       let stream;
       try {
@@ -878,8 +878,8 @@ ${contextText || "No context found in knowledge base."}`;
       stack: error.stack?.split('\n').slice(0, 3).join(' ')
     });
     
-    // Mask internal error for user
-    const userFriendlyError = "Something went wrong. Please try again.";
+    // Mask internal error for user (PROD DEBUG MODE)
+    const userFriendlyError = `❌ Error: ${error.message}${error.status ? ` (Status: ${error.status})` : ''} - Check Vercel Logs for details.`;
     res.write(`data: ${JSON.stringify({ text: userFriendlyError, isError: true })}\n\n`);
     
     // Still persist the error state in DB for context if available
