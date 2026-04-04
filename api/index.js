@@ -25,7 +25,7 @@ const MONGODB_URI = process.env.ATLAS_URI || process.env.MONGODB_URI || 'mongodb
 const isOpenRouterKey = (key) => key && key.startsWith('sk-or-v1-');
 
 // Initialize OpenAI for Chat (Smart Detection)
-const primaryKey = process.env.OPENAI_API_KEY || 'sk-dummy-key-for-build';
+const primaryKey = process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY || 'sk-dummy-key-for-build';
 const isORForChat = isOpenRouterKey(primaryKey);
 
 const openai = new OpenAI({
@@ -621,10 +621,12 @@ app.delete(['/api/chats/:id', '/chats/:id'], async (req, res) => {
 app.post(['/api/chat', '/chat'], async (req, res) => {
   const { message, email, chatId, fileIds } = req.body;
   
-  if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'your_openai_api_key_here') {
-    console.error("❌ Chat API Error: OpenAI API key is missing or is the default placeholder.");
+  const activeApiKey = process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY;
+  if (!activeApiKey || activeApiKey === 'your_openai_api_key_here') {
+    console.error("❌ Chat API Error: No valid API key found (OpenRouter or OpenAI).");
     return res.status(401).json({
       error: 'API key not configured',
+      hint: 'Please add OPENROUTER_API_KEY or OPENAI_API_KEY to your Vercel Environment Variables.'
     });
   }
 
