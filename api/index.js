@@ -185,6 +185,14 @@ app.get('/api/status', async (req, res) => {
   });
 });
 
+// --- STARTUP DIAGNOSTICS ---
+if (require.main === module || process.env.VERCEL) {
+  const activeID = process.env.GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID_FALLBACK;
+  console.log(`🚀 [SERVER] Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🔑 [SERVER] Google Client ID active: ${activeID.substring(0, 15)}...`);
+  console.log(`🗄️ [SERVER] MongoDB URI present: ${!!(process.env.ATLAS_URI || process.env.MONGODB_URI)}`);
+}
+
 // --- AUTH ROUTES ---
 app.post(['/api/auth/google', '/auth/google'], async (req, res) => {
   try {
@@ -196,8 +204,7 @@ app.post(['/api/auth/google', '/auth/google'], async (req, res) => {
     if (credential) {
       try {
         const authClientId = process.env.GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID_FALLBACK;
-        console.log(`🔐 [AUTH] Attempting verification for Client ID: ${authClientId}`);
-        console.log(`🎫 [AUTH] Token prefix: ${credential.substring(0, 20)}... (Length: ${credential.length})`);
+        console.log(`🔐 [AUTH] Verifying token for Client ID: ${authClientId.substring(0, 15)}...`);
         
         const ticket = await googleClient.verifyIdToken({
           idToken: credential,
@@ -207,18 +214,13 @@ app.post(['/api/auth/google', '/auth/google'], async (req, res) => {
         email = payload.email;
         name = payload.name;
         picture = payload.picture;
-        console.log(`✅ [AUTH] Verified: ${email}`);
+        console.log(`✅ [AUTH] Token verified for: ${email}`);
       } catch (verifyError) {
-        console.error('❌ [AUTH] Google Token Verification Failed:', {
-          message: verifyError.message,
-          stack: verifyError.stack?.split('\n').slice(0, 2).join(' '),
-          clientIdUsed: process.env.GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID_FALLBACK,
-          nodeEnv: process.env.NODE_ENV
-        });
+        console.error('❌ [AUTH] Token Verification Failed:', verifyError.message);
         return res.status(401).json({ 
-          error: 'Invalid Google token', 
+          error: 'Verification failed', 
           details: verifyError.message,
-          code: 'GOOGLE_AUTH_FAILURE' 
+          hint: 'Ensure GOOGLE_CLIENT_ID is set in Vercel Dashboard.'
         });
       }
     } else {
@@ -230,30 +232,36 @@ app.post(['/api/auth/google', '/auth/google'], async (req, res) => {
 
     if (!email) return res.status(400).json({ error: 'Email is required' });
 
-    const UserDb = getDb('User');
-    
-    // Try to find existing user
-    let user = await UserDb.findOne({ email });
-    
-    if (!user) {
-      // Create new user from Google profile
-      const avatar = name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'U';
-      if (isMongoConnected && mongoose.connection.readyState === 1) {
-        user = await User.create({ name, email, avatar, picture });
-      } else {
-        user = await jsonDB.users.create({ name, email, avatar, picture });
-      }
-      console.log(`✅ New user created: ${email}`);
-    } else {
-      // Update picture if it changed
-      if (picture && user.picture !== picture) {
+    let user;
+    try {
+      const UserDb = getDb('User');
+      user = await UserDb.findOne({ email });
+      
+      if (!user) {
+        const avatar = name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'U';
         if (isMongoConnected && mongoose.connection.readyState === 1) {
-          user = await User.findByIdAndUpdate(user._id, { picture }, { new: true });
+          user = await User.create({ name, email, avatar, picture });
         } else {
-          user.picture = picture;
+          user = await jsonDB.users.create({ name, email, avatar, picture });
         }
+        console.log(`👤 [AUTH] New user created: ${email}`);
+      } else {
+        if (picture && user.picture !== picture) {
+          if (isMongoConnected && mongoose.connection.readyState === 1) {
+            user = await User.findByIdAndUpdate(user._id, { picture }, { new: true });
+          } else {
+            user.picture = picture;
+          }
+        }
+        console.log(`👋 [AUTH] User logged in: ${email}`);
       }
-      console.log(`👋 Returning user logged in: ${email}`);
+    } catch (dbError) {
+      console.error('❌ [AUTH] Database Error during login:', dbError.message);
+      return res.status(500).json({ 
+        error: 'Database error', 
+        details: dbError.message,
+        hint: 'Check if MongoDB Atlas has whitelisted 0.0.0.0/0'
+      });
     }
 
     res.json({
@@ -264,7 +272,7 @@ app.post(['/api/auth/google', '/auth/google'], async (req, res) => {
       avatar: user.avatar,
     });
   } catch (error) {
-    console.error('Auth Error:', error);
+    console.error('❌ [AUTH] Global Auth Error:', error);
     res.status(500).json({ error: error.message });
   }
 });
