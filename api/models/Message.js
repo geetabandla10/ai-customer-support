@@ -5,6 +5,10 @@ const MessageSchema = new mongoose.Schema({
   content: { type: String, required: true },
   isBot: { type: Boolean, default: false },
   timestamp: { type: String, required: true },
+  sources: [{
+    file_name: String,
+    content: String
+  }],
   createdAt: { type: Date, default: Date.now },
 });
 

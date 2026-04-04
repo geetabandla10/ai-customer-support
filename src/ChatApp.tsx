@@ -11,6 +11,10 @@ interface ChatMessage {
   content: string;
   isBot: boolean;
   timestamp: string;
+  sources?: {
+    file_name: string;
+    content: string;
+  }[];
 }
 
 interface ChatHistoryItem {
@@ -35,13 +39,28 @@ function ChatApp() {
   }]);
   const [chats, setChats] = useState<ChatHistoryItem[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
+  const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
+  const [availableFiles, setAvailableFiles] = useState<any[]>([]);
 
   const [storageMode, setStorageMode] = useState<'mongodb' | 'json' | null>(null);
 
   useEffect(() => {
     fetchChats();
     fetchStatus();
+    fetchAvailableFiles();
   }, []);
+
+  const fetchAvailableFiles = async () => {
+    if (!USER_EMAIL) return;
+    try {
+      const res = await fetch(`/api/knowledge-base/${USER_EMAIL}`);
+      if (res.ok) {
+        setAvailableFiles(await res.json());
+      }
+    } catch (e) {
+      console.error('Failed to fetch files');
+    }
+  };
 
   const fetchStatus = async () => {
     try {
@@ -76,7 +95,8 @@ function ChatApp() {
           id: m._id,
           content: m.content,
           isBot: m.isBot,
-          timestamp: m.timestamp
+          timestamp: m.timestamp,
+          sources: m.sources
         })));
         setCurrentChatId(chatId);
       }
@@ -95,72 +115,163 @@ function ChatApp() {
     }]);
   };
 
-  const handleSendMessage = async (content: string) => {
-    const newUserMessage: ChatMessage = {
-      id: Date.now().toString(),
-      content,
-      isBot: false,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
+  const handleDeleteChat = async (id: string) => {
+    try {
+      const res = await fetch(`/api/chats/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        if (currentChatId === id) {
+          handleNewChat();
+        }
+        fetchChats();
+      }
+    } catch (error) {
+      console.error('Failed to delete chat:', error);
+    }
+  };
 
-    setMessages((prev) => [...prev, newUserMessage]);
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
+
+  const handleSendMessage = async (content: string, isRetry = false) => {
+    if (!content.trim()) return;
+
+    // Cancel existing request if any
+    if (abortController) {
+      abortController.abort();
+    }
+
+    const newController = new AbortController();
+    setAbortController(newController);
+
+    if (!isRetry) {
+      const newUserMessage: ChatMessage = {
+        id: Date.now().toString(),
+        content,
+        isBot: false,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages((prev) => [...prev, newUserMessage]);
+    } else {
+      // If retrying, remove the last error message if it exists
+      setMessages((prev) => {
+        const lastMsg = prev[prev.length - 1];
+        if (lastMsg && lastMsg.isBot && lastMsg.content.includes("Something went wrong")) {
+          return prev.slice(0, -1);
+        }
+        return prev;
+      });
+    }
+
     setIsTyping(true);
     
+    const botMessageId = (Date.now() + 1).toString();
+    setMessages((prev) => [...prev, {
+      id: botMessageId,
+      content: '',
+      isBot: true,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    }]);
+
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           message: content,
           email: USER_EMAIL,
-          chatId: currentChatId
+          chatId: currentChatId,
+          fileIds: selectedFileIds
         }),
+        signal: newController.signal
       });
 
-      let errorMessage = 'Failed to connect. Please check server logs or Vercel config.';
       if (!response.ok) {
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-        } catch(e) {}
-        throw new Error(errorMessage);
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to connect');
       }
 
-      const data = await response.json();
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No reader available');
 
-      setMessages((prev) => [...prev, {
-        id: Date.now().toString(),
-        content: data.reply,
-        isBot: true,
-        timestamp: data.timestamp,
-      }]);
+      const decoder = new TextDecoder();
+      let accumulatedText = "";
 
-      if (!currentChatId && data.chatId) {
-        setCurrentChatId(data.chatId);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            let data: any;
+            try {
+              data = JSON.parse(line.slice(6));
+            } catch (e) {
+              continue;
+            }
+            
+            if (data.isError) {
+              throw new Error(data.text);
+            }
+
+            if (data.text) {
+              setIsTyping(false); 
+              accumulatedText += data.text;
+              setMessages((prev) => 
+                prev.map(m => m.id === botMessageId ? { ...m, content: accumulatedText } : m)
+              );
+            }
+
+            if (data.done) {
+              if (!currentChatId && data.chatId) {
+                setCurrentChatId(data.chatId);
+              }
+              setMessages((prev) => 
+                prev.map(m => m.id === botMessageId ? { 
+                  ...m, 
+                  timestamp: data.timestamp,
+                  sources: data.sources 
+                } : m)
+              );
+              fetchChats();
+            }
+          }
+        }
       }
-      // Refresh chat list to update lastMessage and title
-      fetchChats();
     } catch (error: any) {
-      console.error('Error fetching bot response:', error);
-      setMessages((prev) => [...prev, {
-        id: Date.now().toString(),
-        content: `Error: ${error.message || 'Failed to connect. Please check browser console for details.'}`,
-        isBot: true,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      }]);
+      if (error.name === 'AbortError') return;
+      
+      console.error('Bot Response Error:', error);
+      // Use the actual error message from the backend if available
+      const errorMessage = error.message || "Something went wrong. Please try again.";
+
+      setMessages((prev) => 
+        prev.map(m => m.id === botMessageId 
+          ? { ...m, content: errorMessage } 
+          : m
+        )
+      );
     } finally {
       setIsTyping(false);
+      setAbortController(null);
+    }
+  };
+
+  const handleRetry = () => {
+    const lastUserMessage = [...messages].reverse().find(m => !m.isBot);
+    if (lastUserMessage) {
+      handleSendMessage(lastUserMessage.content, true);
     }
   };
 
   return (
-    <div className="flex h-screen w-full bg-slate-900 overflow-hidden font-sans antialiased text-slate-900 dark:text-slate-100">
+    <div className="flex h-screen w-full bg-slate-50 dark:bg-[#0f111a] overflow-hidden font-sans antialiased text-slate-900 dark:text-slate-100">
       <Sidebar 
         chats={chats} 
         onSelectChat={fetchMessages} 
         onNewChat={handleNewChat}
+        onDeleteChat={handleDeleteChat}
         currentChatId={currentChatId}
         user={user}
         onLogout={() => { logout(); navigate('/login'); }}
@@ -182,7 +293,12 @@ function ChatApp() {
         <ChatWindow 
           messages={messages as any} 
           onSendMessage={handleSendMessage} 
-          isTyping={isTyping} 
+          isTyping={isTyping}
+          onDeleteChat={() => currentChatId && handleDeleteChat(currentChatId)}
+          selectedFileIds={selectedFileIds}
+          onFileIdsChange={setSelectedFileIds}
+          availableFiles={availableFiles}
+          onRetry={handleRetry}
         />
       </main>
     </div>

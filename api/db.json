@@ -37,6 +37,14 @@
       "avatar": "HB",
       "picture": "https://lh3.googleusercontent.com/a/ACg8ocL1oAv5OXoJBgyHomh3v9zZIp1krpgXvbdndlIcYBrX16yvMQ=s96-c",
       "createdAt": "2026-03-20T17:31:24.934Z"
+    },
+    {
+      "_id": "1774086962122",
+      "name": "Demo User",
+      "email": "demo-user@example.com",
+      "avatar": "DU",
+      "picture": "https://api.dicebear.com/7.x/avataaars/svg?seed=demo",
+      "createdAt": "2026-03-21T09:56:02.122Z"
     }
   ],
   "chats": [
@@ -88,6 +96,13 @@
       "title": "tell me about current war upda...",
       "lastMessage": "I'm here to assist! Since I'm in optimized local mode, could you try rephrasing that or checking our FAQ section?",
       "updatedAt": 1774030618635
+    },
+    {
+      "_id": "1775128355731",
+      "userId": "1774027421947",
+      "title": "give answers to the questions ...",
+      "lastMessage": "give answers to the questions in the pdf",
+      "updatedAt": 1775128355731
     }
   ],
   "messages": [
@@ -274,6 +289,14 @@
       "isBot": true,
       "timestamp": "11:46 pm",
       "createdAt": "2026-03-20T18:16:58.633Z"
+    },
+    {
+      "_id": "1775128355830",
+      "chatId": "1775128355731",
+      "content": "give answers to the questions in the pdf",
+      "isBot": false,
+      "timestamp": "04:42 pm",
+      "createdAt": "2026-04-02T11:12:35.831Z"
     }
   ],
   "faqs": []
